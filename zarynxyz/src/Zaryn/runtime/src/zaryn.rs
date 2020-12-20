@@ -69,7 +69,7 @@ pub struct TransactionOutput {
 }
 
 decl_storage! {
-	trait Store for Module<T: Trait> as Utxo {
+	trait Store for Module<T: Trait> as Zaryn {
 		/// All valid unspent transaction outputs are stored in this map.
 		/// Initial set of UTXO is populated from the list stored in genesis.
 		/// We use the identity hasher here because the cryptographic hashing is
@@ -77,7 +77,7 @@ decl_storage! {
 		/// and use blake2_128_concat here. I'm deferring that so as not to break
 		/// the workshop inputs.
 		UtxoStore build(|config: &GenesisConfig| {
-			config.genesis_utxos
+			config.genesis_zaryns
 				.iter()
 				.cloned()
 				.map(|u| (BlakeTwo256::hash_of(&u), u))
@@ -173,13 +173,13 @@ impl<T: Trait> Module<T> {
 		let simple_transaction = Self::get_simple_transaction(transaction);
 
 		// Variables sent to transaction pool
-		let mut missing_utxos = Vec::new();
-		let mut new_utxos = Vec::new();
+		let mut missing_zaryns = Vec::new();
+		let mut new_zarynss = Vec::new();
 		let mut reward = 0;
 
 		// Check that inputs are valid
 		for input in transaction.inputs.iter() {
-			if let Some(input_utxo) = <ZarynStore>::get(&input.outpoint) {
+			if let Some(input_zaryn) = <ZarynStore>::get(&input.outpoint) {
 				ensure!(sp_io::crypto::sr25519_verify(
 					&Signature::from_raw(*input.sigscript.as_fixed_bytes()),
 					&simple_transaction,
@@ -196,13 +196,13 @@ impl<T: Trait> Module<T> {
 			ensure!(output.value > 0, "output value must be nonzero");
 			let hash = BlakeTwo256::hash_of(&(&transaction.encode(), output_index));
 			output_index = output_index.checked_add(1).ok_or("output index overflow")?;
-			ensure!(!<UtxoStore>::contains_key(hash), "output already exists");
+			ensure!(!<ZarynStore>::contains_key(hash), "output already exists");
 			total_output = total_output.checked_add(output.value).ok_or("output value overflow")?;
 			new_utxos.push(hash.as_fixed_bytes().to_vec());
 		}
 
 		// If no race condition, check the math
-		if missing_utxos.is_empty() {
+		if missing_zaryns.is_empty() {
 			ensure!( total_input >= total_output, "output value must not exceed input value");
 			reward = total_input.checked_sub(total_output).ok_or("reward underflow")?;
 		}
@@ -253,7 +253,7 @@ impl<T: Trait> Module<T> {
 		let hash = BlakeTwo256::hash_of(&(&zaryn,
 					<frame_system::Module<T>>::block_number().saturated_into::<u64>()));
 
-		<UtxoStore>::insert(hash, utxo);
+		<ZarynStore>::insert(hash, utxo);
 		Self::deposit_event(Event::RewardsIssued(reward, hash));
 	}
 
@@ -274,8 +274,8 @@ impl<T: Trait> Module<T> {
 	pub fn get_missing_zaryns(transaction: &Transaction) -> Vec<&H256> {
 		let mut missing_zaryns = Vec::new();
 		for input in transaction.inputs.iter() {
-			if <UtxoStore>::get(&input.outpoint).is_none() {
-				missing_utxos.push(&input.outpoint);
+			if <ZarynStore>::get(&input.outpoint).is_none() {
+				missing_zaryns.push(&input.outpoint);
 			}
 		}
 		missing_zaryns
@@ -435,7 +435,7 @@ mod tests {
 			assert_ok!(Zaryn::spend(Origin::signed(0), transaction));
 			assert!(!ZarynStore::contains_key(H256::from(GENESIS_ZARYN)));
 			assert!(ZarynStore::contains_key(new_utxo_hash));
-			assert_eq!(50, UtxoStore::get(new_utxo_hash).unwrap().value);
+			assert_eq!(50, ZarynStore::get(new_zaryn_hash).unwrap().value);
 		});
 	}
 
@@ -459,7 +459,7 @@ mod tests {
 			let karl_signature = sp_io::crypto::sr25519_sign(SR25519, &karl_pub_key, &transaction.encode()).unwrap();
 			transaction.inputs[0].sigscript = H512::from(karl_signature);
 
-			assert_noop!(Utxo::spend(Origin::signed(0), transaction), "missing inputs");
+			assert_noop!(Zaryn::spend(Origin::signed(0), transaction), "missing inputs");
 		});
 	}
 
@@ -495,7 +495,7 @@ mod tests {
 						outpoint: H256::from(GENESIS_ZARYN.clone()),
 						sigscript: H512::zero(),
 					},
-					// A double spend of the same UTXO!
+					// A double spend of the same ZARYN!
 					TransactionInput {
 						outpoint: H256::from(GENESIS_ZARYN),
 						sigscript: H512::zero(),
