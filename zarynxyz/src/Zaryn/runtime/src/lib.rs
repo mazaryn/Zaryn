@@ -349,8 +349,8 @@ impl_runtime_apis! {
 			tx: <Block as BlockT>::Extrinsic,
 		) -> TransactionValidity {
 			// Extrinsics representing UTXO transaction need some special handling
-			if let Some(&utxo::Call::spend(ref transaction)) = IsSubType::<<Utxo as Callable<Runtime>>::Call>::is_sub_type(&tx.function) {
-				match Utxo::validate_transaction(&transaction) {
+			if let Some(&zaryn::Call::spend(ref transaction)) = IsSubType::<<Zaryn as Callable<Runtime>>::Call>::is_sub_type(&tx.function) {
+				match Zaryn::validate_transaction(&transaction) {
 					// Transaction verification failed
 					Err(e) => {
 						sp_runtime::print(e);
@@ -361,7 +361,7 @@ impl_runtime_apis! {
 				}
 			}
 
-			// Fall back to default logic for non UTXO-spending extrinsics
+			// Fall back to default logic for non ZARYN-spending extrinsics
 			Executive::validate_transaction(source, tx)
 		}
 	}
