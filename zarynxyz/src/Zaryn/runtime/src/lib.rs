@@ -261,12 +261,12 @@ construct_runtime!(
 		System: frame_system::{Module, Call, Config, Storage, Event<T>},
 		Timestamp: timestamp::{Module, Call, Storage, Inherent},
 		//TODO Should we remove balance pallet? It isn't necessary and might be confusing
-		// alongside the UTXO tokens. But it is darn convenient for testing a quick transaction.
+		// alongside the ZARYN tokens. But it is darn convenient for testing a quick transaction.
 		Balances: balances::{Module, Call, Storage, Config<T>, Event<T>},
 		Sudo: sudo::{Module, Call, Config<T>, Storage, Event<T>},
 		DifficultyAdjustment: difficulty::{Module, Storage, Config},
 		BlockAuthor: block_author::{Module, Call, Storage, Inherent},
-		Utxo: utxo::{Module, Call, Storage, Config, Event},
+		Zaryn: zaryn::{Module, Call, Storage, Config, Event},
 	}
 );
 
