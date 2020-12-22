@@ -174,7 +174,7 @@ impl<T: Trait> Module<T> {
 
 		// Variables sent to transaction pool
 		let mut missing_zaryns = Vec::new();
-		let mut new_zarynss = Vec::new();
+		let mut new_zaryns = Vec::new();
 		let mut reward = 0;
 
 		// Check that inputs are valid
